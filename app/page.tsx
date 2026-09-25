@@ -105,7 +105,7 @@ function UniqueManifestationPortalContent() {
     e.preventDefault();
     if (!name || !intention) return;
 
-    // İsmi ve niyeti tarayıcı hafızasına güvenle kaydediyoruz
+    // İsmi ve niyeti tarayıcı hafızasına kaydediyoruz
     localStorage.setItem("user_name", name.trim());
     localStorage.setItem("user_intention", intention.trim());
 
@@ -117,7 +117,6 @@ function UniqueManifestationPortalContent() {
     const uniqueHash = 'UM-369-SEAL-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now().toString(36);
     setHashOutput(uniqueHash);
 
-    // /api/save-seal çağrısı kaldırıldı, artık tamamen istemci tabanlı çalışıyor.
 
     setTimeout(() => {
       setIsGenerating(false);
@@ -125,33 +124,28 @@ function UniqueManifestationPortalContent() {
     }, 8200);
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     try {
       setIsCheckoutLoading(true);
-      // Ödeme öncesi garanti olması için tekrar kaydedelim
+      // Bilgileri tarayıcı hafızasına kaydediyoruz
       localStorage.setItem("user_name", currentHolderName);
       localStorage.setItem("user_intention", intention);
+      localStorage.setItem("user_hash", hashOutput);
 
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: currentHolderName, intention, hashOutput })
-      });
-      const data = await res.json();
+      // Eğer Lemon Squeezy doğrudan ödeme linkin varsa buraya direkt ekleyebilirsin
+      // Örnek: window.location.href = "https://magazan.lemonsqueezy.com/buy/senin-urun-id";
 
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("Ödeme başlatılamadı. Lütfen tekrar deneyin.");
+      // Şimdilik test ve simülasyon amaçlı doğrudan başarı sayfasına yönlendirelim:
+      setTimeout(() => {
         setIsCheckoutLoading(false);
-      }
+        window.location.href = `/?success=true&hash=${encodeURIComponent(hashOutput)}`;
+      }, 1500);
     } catch (error) {
       console.error("Hata:", error);
       alert("Bir hata oluştu.");
       setIsCheckoutLoading(false);
     }
   };
-
   const getDynamicSealParams = () => {
     const timestamp = Date.now().toString();
     const combined = currentHolderName + intention + timestamp;
