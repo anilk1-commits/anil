@@ -3,6 +3,59 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+// ==========================================
+// NEXT.JS SERVER ACTION (404 RİSKİNİ KESİN OLARAK BİTİRİR)
+// ==========================================
+async function createCheckoutSession(formData: { name: string; intention: string; hashOutput: string }) {
+  "use server";
+
+  const apiKey = process.env.LEMONSQUEEZY_API_KEY;
+  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
+  const variantId = process.env.LEMONSQUEEZY_VARIANT_ID;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.uniquemanifestation.com";
+
+  if (!apiKey || !storeId || !variantId) {
+    throw new Error("Lemon Squeezy ortam değişkenleri eksik!");
+  }
+
+  const response = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
+    method: "POST",
+    headers: {
+      Accept: "application/vnd.api+json",
+      "Content-Type": "application/vnd.api+json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      data: {
+        type: "checkouts",
+        attributes: {
+          checkout_data: {
+            custom: {
+              user_name: formData.name,
+              user_intention: formData.intention,
+            },
+          },
+          product_options: {
+            redirect_url: `${appUrl}/?success=true&hash=${formData.hashOutput || ''}`,
+          },
+        },
+        relationships: {
+          store: { data: { type: "stores", id: storeId } },
+          variant: { data: { type: "variants", id: variantId } },
+        },
+      },
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    console.error("Lemon Squeezy API Hatası:", data);
+    throw new Error(JSON.stringify(data));
+  }
+
+  return data.data.attributes.url;
+}
+
 function UniqueManifestationPortalContent() {
   const searchParams = useSearchParams();
   const [name, setName] = useState<string>('');
@@ -41,7 +94,6 @@ function UniqueManifestationPortalContent() {
       setMatrixReady(true);
       setHashOutput(hashParam);
 
-      // Tarayıcı hafızasından ismi ve niyeti güvenli bir şekilde çekiyoruz
       const savedName = localStorage.getItem("user_name");
       const savedIntention = localStorage.getItem("user_intention");
 
@@ -105,7 +157,6 @@ function UniqueManifestationPortalContent() {
     e.preventDefault();
     if (!name || !intention) return;
 
-    // İsmi ve niyeti tarayıcı hafızasına kaydediyoruz
     localStorage.setItem("user_name", name.trim());
     localStorage.setItem("user_intention", intention.trim());
 
@@ -117,7 +168,6 @@ function UniqueManifestationPortalContent() {
     const uniqueHash = 'UM-369-SEAL-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now().toString(36);
     setHashOutput(uniqueHash);
 
-
     setTimeout(() => {
       setIsGenerating(false);
       setMatrixReady(true);
@@ -127,26 +177,25 @@ function UniqueManifestationPortalContent() {
   const handleCheckout = async () => {
     try {
       setIsCheckoutLoading(true);
-      // Ödeme öncesi garanti olması için tekrar kaydedelim
       localStorage.setItem("user_name", currentHolderName);
       localStorage.setItem("user_intention", intention);
 
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: currentHolderName, intention, hashOutput })
+      // Doğrudan Sunucu Aksiyonunu (Server Action) çağırıyoruz
+      const checkoutUrl = await createCheckoutSession({
+        name: currentHolderName,
+        intention,
+        hashOutput
       });
-      const data = await res.json();
 
-      if (data.url) {
-        window.location.href = data.url;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
       } else {
         alert("Ödeme başlatılamadı. Lütfen tekrar deneyin.");
         setIsCheckoutLoading(false);
       }
     } catch (error) {
       console.error("Hata:", error);
-      alert("Bir hata oluştu.");
+      alert("Ödeme oturumu oluşturulurken bir hata oluştu.");
       setIsCheckoutLoading(false);
     }
   };
@@ -473,7 +522,7 @@ function UniqueManifestationPortalContent() {
                       disabled={isCheckoutLoading}
                       className="w-full py-4 rounded-xl bg-[#9333EA] text-white font-black text-xs uppercase tracking-wider hover:bg-[#A855F7] transition-all shadow-[0_0_30px_rgba(147,51,234,0.6)] cursor-pointer disabled:opacity-50"
                   >
-                    {isCheckoutLoading ? "Initializing Secure Checkout" : "Unlock Your Intention-Customized Seal & Audio ($14.90)"}
+                    {isCheckoutLoading ? "Initializing Secure Checkout..." : "Unlock Your Intention-Customized Seal & Audio ($14.90)"}
                   </button>
 
                   <button
