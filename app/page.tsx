@@ -133,12 +133,12 @@ function UniqueManifestationPortalContent() {
       localStorage.setItem("user_hash", hashOutput);
 
       // Eğer Lemon Squeezy doğrudan ödeme linkin varsa buraya direkt ekleyebilirsin
-      // Örnek: window.location.href = "https://magazan.lemonsqueezy.com/buy/senin-urun-id";
+      // Örnek: window.location.href = "https://uniquemanifestation.lemonsqueezy.com/checkout/buy/40a2257a-34da-4635-ac5b-9381af03452d?discount=0";
 
       // Şimdilik test ve simülasyon amaçlı doğrudan başarı sayfasına yönlendirelim:
       setTimeout(() => {
         setIsCheckoutLoading(false);
-        window.location.href = `/?success=true&hash=${encodeURIComponent(hashOutput)}`;
+        window.location.href = "https://uniquemanifestation.lemonsqueezy.com/checkout/buy/40a2257a-34da-4635-ac5b-9381af03452d?discount=0";
       }, 1500);
     } catch (error) {
       console.error("Hata:", error);
