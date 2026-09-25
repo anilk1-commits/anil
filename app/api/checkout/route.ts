@@ -9,7 +9,7 @@ export async function POST(request: Request) {
         const apiKey = process.env.LEMONSQUEEZY_API_KEY;
         const storeId = process.env.LEMONSQUEEZY_STORE_ID;
         const variantId = process.env.LEMONSQUEEZY_VARIANT_ID;
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.uniquemanifestation.com";
 
         if (!apiKey || !storeId || !variantId) {
             return NextResponse.json(
