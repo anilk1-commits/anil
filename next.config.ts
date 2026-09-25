@@ -1,10 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    typescript: {
-        // Vercel build alırken TS hatalarını yoksayar ve projeyi başarıyla ayağa kaldırır
-        ignoreBuildErrors: true,
-    },
+    output: "export",
+    trailingSlash: true,
 };
 
 export default nextConfig;
