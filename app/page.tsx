@@ -26,6 +26,14 @@ function UniqueManifestationPortalContent() {
   useEffect(() => {
     document.title = "Unique Manifestation | Custom Intention Seal & 432 Hz Frequency";
 
+    let metaDesc = document.querySelector("meta[name='description']") as HTMLMetaElement | null;
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.name = 'description';
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.content = "Transform your desires with Unique Manifestation. Generate your custom cryptographic intention seal and 432 Hz frequency audio package tailored exclusively to you.";
+
     const successParam = searchParams.get("success");
     const hashParam = searchParams.get("hash");
 
@@ -60,6 +68,7 @@ function UniqueManifestationPortalContent() {
         "SYNCHRONIZING MANIFESTATION VECTOR...",
         "CALIBRATING NEURAL FREQUENCY RESONANCE...",
         "ESTABLISHING SECURE ENTANGLEMENT CHANNEL...",
+        "01101001 11001010 01010111 00110011",
         "COMPILING MATRIX SEAL v3.69..."
       ];
 
@@ -80,7 +89,9 @@ function UniqueManifestationPortalContent() {
       let currentStep = 0;
       stepInterval = setInterval(() => {
         currentStep++;
-        if (currentStep < steps.length) setLoadingStep(currentStep);
+        if (currentStep < steps.length) {
+          setLoadingStep(currentStep);
+        }
       }, 1600);
     }
 
@@ -130,7 +141,7 @@ function UniqueManifestationPortalContent() {
       }
     } catch (error) {
       console.error("Ödeme Hatası:", error);
-      alert("Ödeme başlatılırken bir hata oluştu. Lütfen konsolu kontrol edin.");
+      alert("Ödeme başlatılırken bir hata oluştu.");
       setIsCheckoutLoading(false);
     }
   };
@@ -165,9 +176,17 @@ function UniqueManifestationPortalContent() {
   <g transform="rotate(${p.rotationAngle} 250 250)">
     <polygon points="${p.polygonPoints1}" fill="none" stroke="#A855F7" stroke-width="2.5"/>
     <polygon points="${p.polygonPoints2}" fill="none" stroke="#00FF66" stroke-width="1.5"/>
+    <circle cx="250" cy="250" r="70" fill="none" stroke="#00FF66" stroke-width="1" stroke-dasharray="3 3"/>
   </g>
-  <text x="250" y="470" fill="#A855F7" font-family="monospace" font-size="10" text-anchor="middle">HOLDER: ${currentHolderName.toUpperCase()}</text>
-  <text x="250" y="485" fill="#A855F7" font-family="monospace" font-size="10" text-anchor="middle">HASH: ${hashOutput}</text>
+  <circle cx="250" cy="250" r="${p.innerRadius}" fill="none" stroke="#9333EA" stroke-width="2"/>
+  <polygon points="250,${250 - p.innerRadius + 5} ${250 + p.innerRadius - 5},250 250,${250 + p.innerRadius - 5} ${250 - p.innerRadius + 5},250" fill="none" stroke="#00FF66" stroke-width="1"/>
+  <circle cx="250" cy="250" r="10" fill="#00FF66"/>
+  <style>
+    .title { fill: #00FF66; font-family: monospace; font-size: 14px; text-anchor: middle; font-weight: bold; }
+    .meta { fill: #A855F7; font-family: monospace; font-size: 10px; text-anchor: middle; }
+  </style>
+  <text x="250" y="470" class="meta">HOLDER: ${currentHolderName.toUpperCase()}</text>
+  <text x="250" y="485" class="meta">HASH: ${hashOutput}</text>
 </svg>`;
 
     const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
@@ -185,110 +204,215 @@ function UniqueManifestationPortalContent() {
     try {
       const sampleRate = 44100;
       const durationSeconds = 6;
-      const audioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)({ sampleRate });
-      const buffer = audioCtx.createBuffer(1, sampleRate * durationSeconds, sampleRate);
+      const numChannels = 1;
+      const totalSamples = sampleRate * durationSeconds;
+
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const audioCtx = new AudioContextClass({ sampleRate });
+      const buffer = audioCtx.createBuffer(numChannels, totalSamples, sampleRate);
       const channelData = buffer.getChannelData(0);
 
-      for (let i = 0; i < channelData.length; i++) {
-        channelData[i] = Math.sin(2 * Math.PI * 432 * (i / sampleRate)) * 0.4;
+      const combined = currentHolderName + intention + Date.now().toString();
+      let hash = 0;
+      for (let i = 0; i < combined.length; i++) {
+        hash = (hash << 5) - hash + combined.charCodeAt(i);
+        hash |= 0;
+      }
+      const absHash = Math.abs(hash);
+
+      const baseFreq = 428 + (absHash % 17) * 0.5;
+      const modFreq = 2 + ((absHash >> 3) % 9);
+      const harmonicMultiplier = 1.5 + ((absHash >> 5) % 3);
+
+      for (let i = 0; i < totalSamples; i++) {
+        let envelope = 1;
+        if (i < 4410) envelope = i / 4410;
+        else if (i > totalSamples - 4410) envelope = (totalSamples - i) / 4410;
+
+        const t = i / sampleRate;
+        const carrier = Math.sin(2 * Math.PI * baseFreq * t);
+        const modulator = Math.sin(2 * Math.PI * modFreq * t) * 0.25;
+        const harmonic = Math.sin(2 * Math.PI * (baseFreq * harmonicMultiplier) * t) * 0.15;
+
+        channelData[i] = (carrier + modulator + harmonic) * 0.4 * envelope;
       }
 
-      // Basit wav oluşturucu
-      const wavBuffer = bufferToWav(buffer, channelData.length);
+      const wavBuffer = bufferToWav(buffer, totalSamples);
       const blob = new Blob([wavBuffer], { type: 'audio/wav' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${currentHolderName.replace(/\s+/g, '_')}_432Hz.wav`;
+      link.download = `${currentHolderName.replace(/\s+/g, '_')}_Unique_432Hz_Resonance.wav`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch {
-      alert("Audio error.");
+      alert("Audio generation error.");
     }
   };
 
   const bufferToWav = (buffer: AudioBuffer, totalSamples: number) => {
-    const length = totalSamples * 2 + 44;
+    const numOfChan = buffer.numberOfChannels;
+    const length = totalSamples * numOfChan * 2 + 44;
     const out = new DataView(new ArrayBuffer(length));
     let pos = 0;
-    const writeString = (s: string) => { for (let i = 0; i < s.length; i++) out.setUint8(pos++, s.charCodeAt(i)); };
 
-    writeString('RIFF'); out.setUint32(pos, length - 4, true); pos += 4;
-    writeString('WAVEfmt '); out.setUint32(pos, 16, true); pos += 4;
-    out.setUint16(pos, 1, true); pos += 2;
-    out.setUint16(pos, 1, true); pos += 2;
-    out.setUint32(pos, buffer.sampleRate, true); pos += 4;
-    out.setUint32(pos, buffer.sampleRate * 2, true); pos += 4;
-    out.setUint16(pos, 2, true); pos += 2;
-    out.setUint16(pos, 16, true); pos += 2;
-    writeString('data'); out.setUint32(pos, totalSamples * 2, true); pos += 4;
+    function writeString(str: string) {
+      for (let i = 0; i < str.length; i++) {
+        out.setUint8(pos++, str.charCodeAt(i));
+      }
+    }
+    function setUint16(data: number) { out.setUint16(pos, data, true); pos += 2; }
+    function setUint32(data: number) { out.setUint32(pos, data, true); pos += 4; }
 
+    writeString('RIFF');
+    setUint32(length - 8);
+    writeString('WAVE');
+    writeString('fmt ');
+    setUint32(16);
+    setUint16(1);
+    setUint16(numOfChan);
+    setUint32(buffer.sampleRate);
+    setUint32(buffer.sampleRate * 2 * numOfChan);
+    setUint16(numOfChan * 2);
+    setUint16(16);
+    writeString('data');
+    setUint32(length - pos - 4);
+
+    let offset = 0;
     const channelData = buffer.getChannelData(0);
-    for (let i = 0; i < totalSamples; i++, pos += 2) {
-      const s = Math.max(-1, Math.min(1, channelData[i]));
-      out.setInt16(pos, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    while (offset < totalSamples) {
+      const sample = Math.max(-1, Math.min(1, channelData[offset]));
+      const intSample = (0.5 + (sample < 0 ? sample * 32768 : sample * 32767)) | 0;
+      out.setInt16(pos, intSample, true);
+      pos += 2;
+      offset++;
     }
     return out.buffer;
+  };
+
+  const toggleFaq = (index: number) => {
+    setOpenFaq(openFaq === index ? null : index);
   };
 
   const previewParams = getDynamicSealParams();
 
   return (
-      <main className="min-h-screen bg-[#020205] text-gray-100 flex flex-col items-center justify-center p-4 md:p-8 font-sans">
-        <div className="max-w-xl mx-auto w-full bg-[#05050a] border border-purple-900/50 rounded-3xl p-8 shadow-2xl">
-          <h1 className="text-2xl font-bold text-white text-center mb-6">Unique Manifestation Portal</h1>
+      <main className="min-h-screen bg-[#020205] text-gray-100 flex flex-col items-center justify-center p-4 md:p-8 relative overflow-x-hidden font-sans">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[900px] bg-purple-900/30 rounded-full blur-[220px] pointer-events-none"></div>
 
-          {!matrixReady ? (
-              <form onSubmit={handleManifest} className="space-y-4">
-                <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your Name"
-                    required
-                    className="w-full bg-[#0a0a12] border border-purple-900 rounded-xl px-4 py-3 text-sm text-white"
-                />
-                <textarea
-                    value={intention}
-                    onChange={(e) => setIntention(e.target.value)}
-                    placeholder="Your Intention"
-                    required
-                    rows={3}
-                    className="w-full bg-[#0a0a12] border border-purple-900 rounded-xl px-4 py-3 text-sm text-white resize-none"
-                />
+        <div className="max-w-3xl w-full space-y-10 relative z-10 my-12">
+          <header className="bg-[#05050a]/95 backdrop-blur-xl border border-purple-900/50 p-8 md:p-12 rounded-3xl shadow-[0_0_50px_rgba(147,51,234,0.12)] space-y-6 text-center">
+          <span className="text-xs uppercase tracking-[0.4em] text-[#00FF66] font-mono">
+            // Cryptographic & Quantum Alignment Protocol
+          </span>
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+              Make Your Intention <span className="text-[#A855F7]">Absolutely Unique.</span>
+            </h1>
+
+            <div className="text-gray-300 text-sm md:text-base leading-relaxed space-y-4 max-w-2xl mx-auto font-light text-left">
+              <div className="space-y-4 text-center border-b border-purple-950/80 pb-6">
+                <p className="text-white font-medium text-base md:text-lg">
+                  Generic wishes vanish into the background noise of the universe. To manifest your reality, your frequency must stand alone.
+                </p>
                 <button
-                    type="submit"
-                    disabled={isGenerating}
-                    className="w-full py-4 rounded-xl bg-[#9333EA] text-white font-bold uppercase text-xs tracking-wider hover:bg-purple-600 cursor-pointer"
+                    onClick={scrollToGenerator}
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[#00FF66] text-black font-extrabold text-xs uppercase tracking-widest hover:bg-[#26ff7d] transition-all shadow-[0_0_25px_rgba(0,255,102,0.6)] cursor-pointer"
                 >
-                  {isGenerating ? "Generating Matrix..." : "Generate Seal & Audio"}
-                </button>
-              </form>
-          ) : (
-              <div className="space-y-6 text-center">
-                <p className="text-xs font-mono text-[#00FF66] break-all bg-black p-3 rounded-xl border border-gray-900">{hashOutput}</p>
-                <button
-                    onClick={handleCheckout}
-                    disabled={isCheckoutLoading}
-                    className="w-full py-4 rounded-xl bg-[#9333EA] text-white font-bold text-xs uppercase tracking-wider hover:bg-purple-600 cursor-pointer disabled:opacity-50"
-                >
-                  {isCheckoutLoading ? "Redirecting to Lemon Squeezy..." : "Unlock Full Package ($14.90)"}
+                  <span>Claim Your Intention-Customized Seal & Audio</span>
                 </button>
               </div>
-          )}
+            </div>
+          </header>
+
+          <div ref={generatorRef} className="max-w-xl mx-auto w-full bg-[#05050a]/95 backdrop-blur-2xl border border-purple-900/50 rounded-3xl p-8 md:p-10 shadow-[0_0_60px_rgba(147,51,234,0.15)]">
+            <div className="text-center mb-8">
+              <span className="block text-xs uppercase tracking-widest text-[#00FF66] font-mono mb-2">// Secure Manifestation Chamber</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">
+                Encode Your Custom Intention Seal
+              </h2>
+            </div>
+
+            {isGenerating ? (
+                <div className="py-10 px-4 space-y-6 text-center bg-black border border-[#00FF66]/40 rounded-2xl font-mono">
+                  <h3 className="text-xl font-black text-white uppercase tracking-wider">
+                    {loadingStep === 0 && "DECRYPTING NAME HARMONICS..."}
+                    {loadingStep === 1 && "MAPPING INTENTION VECTOR..."}
+                    {loadingStep === 2 && "INJECTING 432 Hz MATRIX..."}
+                    {loadingStep === 3 && "SYNCHRONIZING QUANTUM ENTANGLEMENT..."}
+                    {loadingStep >= 4 && "FORGING HASH SIGNATURE..."}
+                  </h3>
+                  <div className="bg-[#020204] border border-gray-900 rounded-xl p-4 text-left h-36 overflow-hidden text-[11px] text-[#00FF66] space-y-1">
+                    {consoleLogs.map((log, idx) => (
+                        <div key={idx}>{log}</div>
+                    ))}
+                  </div>
+                </div>
+            ) : !matrixReady ? (
+                <form onSubmit={handleManifest} className="space-y-5">
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase tracking-wider text-gray-400 mb-2">Your Full Name</label>
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g., Alex Vance"
+                        required
+                        className="w-full bg-[#0a0a12] border border-purple-900/50 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-[#A855F7]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase tracking-wider text-gray-400 mb-2">Your Specific Intention</label>
+                    <textarea
+                        value={intention}
+                        onChange={(e) => setIntention(e.target.value)}
+                        rows={3}
+                        placeholder="e.g., Absolute financial abundance..."
+                        required
+                        className="w-full bg-[#0a0a12] border border-purple-900/50 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-[#A855F7] resize-none"
+                    />
+                  </div>
+                  <button
+                      type="submit"
+                      className="w-full py-4 rounded-xl bg-[#9333EA] text-white font-black tracking-wider uppercase text-xs md:text-sm hover:bg-[#A855F7] transition-all cursor-pointer shadow-[0_0_30px_rgba(147,51,234,0.6)]"
+                  >
+                    Generate Your Intention-Customized Seal & Audio
+                  </button>
+                </form>
+            ) : (
+                <div className="space-y-6 text-center">
+                  <div className="p-5 bg-black border border-[#9333EA]/40 rounded-2xl space-y-4">
+                    <div className="w-36 h-36 mx-auto bg-black border border-[#9333EA]/50 rounded-2xl flex items-center justify-center relative overflow-hidden">
+                      <svg className="w-28 h-28 text-[#A855F7] opacity-60" viewBox="0 0 500 500" fill="none" stroke="currentColor" strokeWidth="3">
+                        <circle cx="250" cy="250" r={previewParams.outerRadius} stroke="#9333EA" />
+                      </svg>
+                      <span className="absolute text-[11px] font-mono font-black text-[#00FF66] bg-black/60 px-2 py-1">WATERMARK PREVIEW</span>
+                    </div>
+                    <p className="text-[11px] font-mono text-gray-400 break-all bg-black p-2 rounded-lg">{hashOutput}</p>
+                  </div>
+
+                  <button
+                      onClick={handleCheckout}
+                      disabled={isCheckoutLoading}
+                      className="w-full py-4 rounded-xl bg-[#9333EA] text-white font-black text-xs uppercase tracking-wider hover:bg-[#A855F7] cursor-pointer shadow-[0_0_30px_rgba(147,51,234,0.6)] disabled:opacity-50"
+                  >
+                    {isCheckoutLoading ? "Initializing Secure Checkout..." : "Unlock Your Intention-Customized Seal & Audio ($14.90)"}
+                  </button>
+                </div>
+            )}
+          </div>
         </div>
 
         {showSuccessModal && (
-            <div className="fixed inset-0 bg-black/9output flex items-center justify-center p-4 z-50">
-              <div className="bg-[#080814] border border-[#00FF66] max-w-md w-full rounded-3xl p-6 text-center space-y-4">
-                <h3 className="text-xl font-bold text-white">Payment Successful!</h3>
+            <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
+              <div className="bg-[#080814] border border-[#00FF66]/60 max-w-md w-full rounded-3xl p-6 text-center space-y-4">
+                <h3 className="text-xl font-black text-white">Payment Verified!</h3>
                 <button onClick={handleDownloadSeal} className="w-full py-3 bg-[#00FF66] text-black font-bold text-xs uppercase rounded-xl cursor-pointer">
-                  Download Seal (.SVG)
+                  Download Custom Seal (.SVG)
                 </button>
                 <button onClick={handleDownloadAudio} className="w-full py-3 bg-[#9333EA] text-white font-bold text-xs uppercase rounded-xl cursor-pointer">
-                  Download Audio (.WAV)
+                  Download 432 Hz Audio (.WAV)
                 </button>
               </div>
             </div>
@@ -299,7 +423,7 @@ function UniqueManifestationPortalContent() {
 
 export default function Page() {
   return (
-      <Suspense fallback={<div className="min-h-screen bg-[#020205] text-white flex items-center justify-center">Loading...</div>}>
+      <Suspense fallback={<div className="min-h-screen bg-[#020205] text-white flex items-center justify-center">Loading Portal...</div>}>
         <UniqueManifestationPortalContent />
       </Suspense>
   );
