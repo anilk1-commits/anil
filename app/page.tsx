@@ -105,7 +105,7 @@ function UniqueManifestationPortalContent() {
     e.preventDefault();
     if (!name || !intention) return;
 
-    // İsmi ve niyeti tarayıcı hafızasına kaydediyoruz
+    // İsmi ve niyeti tarayıcı hafızasına güvenle kaydediyoruz
     localStorage.setItem("user_name", name.trim());
     localStorage.setItem("user_intention", intention.trim());
 
@@ -117,15 +117,7 @@ function UniqueManifestationPortalContent() {
     const uniqueHash = 'UM-369-SEAL-' + Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now().toString(36);
     setHashOutput(uniqueHash);
 
-    try {
-      await fetch('/api/save-seal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: currentHolderName, intention, hashOutput: uniqueHash })
-      });
-    } catch (err) {
-      console.error("DB kayıt hatası:", err);
-    }
+    // /api/save-seal çağrısı kaldırıldı, artık tamamen istemci tabanlı çalışıyor.
 
     setTimeout(() => {
       setIsGenerating(false);
