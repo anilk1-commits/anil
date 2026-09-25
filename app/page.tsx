@@ -124,28 +124,33 @@ function UniqueManifestationPortalContent() {
     }, 8200);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     try {
       setIsCheckoutLoading(true);
-      // Bilgileri tarayıcı hafızasına kaydediyoruz
+      // Ödeme öncesi garanti olması için tekrar kaydedelim
       localStorage.setItem("user_name", currentHolderName);
       localStorage.setItem("user_intention", intention);
-      localStorage.setItem("user_hash", hashOutput);
 
-      // Eğer Lemon Squeezy doğrudan ödeme linkin varsa buraya direkt ekleyebilirsin
-      // Örnek: window.location.href = "https://uniquemanifestation.lemonsqueezy.com/checkout/buy/40a2257a-34da-4635-ac5b-9381af03452d?discount=0";
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: currentHolderName, intention, hashOutput })
+      });
+      const data = await res.json();
 
-      // Şimdilik test ve simülasyon amaçlı doğrudan başarı sayfasına yönlendirelim:
-      setTimeout(() => {
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Ödeme başlatılamadı. Lütfen tekrar deneyin.");
         setIsCheckoutLoading(false);
-        window.location.href = "https://uniquemanifestation.lemonsqueezy.com/checkout/buy/40a2257a-34da-4635-ac5b-9381af03452d?discount=0";
-      }, 1500);
+      }
     } catch (error) {
       console.error("Hata:", error);
       alert("Bir hata oluştu.");
       setIsCheckoutLoading(false);
     }
   };
+
   const getDynamicSealParams = () => {
     const timestamp = Date.now().toString();
     const combined = currentHolderName + intention + timestamp;
